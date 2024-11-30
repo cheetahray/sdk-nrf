@@ -17,7 +17,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#define sensorFarFarFarFar
+//#define sensorIIIFarFarFarFar
 const struct bt_mesh_comp *model_handler_init(void);
 
 int sensor_message(char *content);

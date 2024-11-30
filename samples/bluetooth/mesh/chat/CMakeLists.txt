@@ -13,6 +13,9 @@ target_sources(app PRIVATE
 	src/main.c
 	src/uart1.c
 	src/model_handler.c
-	src/chat_cli.c)
+	src/chat_cli.c
+	src/temp_humid.c
+	src/accel_gyro.c
+	src/light.c)
 target_include_directories(app PRIVATE include)
 # NORDIC SDK APP END

@@ -22,7 +22,7 @@
 // CRC-16-CCITT 多項式 0x1021
 #define CRC16_POLY 0xA001
 #define CRC16_INIT 0xFFFF
-
+#ifdef sensor485
 enum SenseType {
 	ID,
     Temperature,     // 默認值 1
@@ -181,3 +181,4 @@ void uart_out(void)
 
 	}
 }
+#endif

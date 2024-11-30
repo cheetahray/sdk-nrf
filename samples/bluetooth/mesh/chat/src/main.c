@@ -14,6 +14,9 @@
 #include <dk_buttons_and_leds.h>
 #include "model_handler.h"
 #include "uart1.h"
+#include "temp_humid.h"
+#include "accel_gyro.h"
+#include "light.h"
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(chat, CONFIG_LOG_DEFAULT_LEVEL);
 
@@ -22,10 +25,22 @@ LOG_MODULE_REGISTER(chat, CONFIG_LOG_DEFAULT_LEVEL);
 
 /* scheduling priority used by each thread */
 #define PRIORITY 7
-
+#ifdef sensor485
 K_THREAD_DEFINE(uart_out_id, STACKSIZE, uart_out, NULL, NULL, NULL,
 		PRIORITY, 0, 0);
-
+#endif
+#ifdef sensorFarFarFarFar
+K_THREAD_DEFINE(sht3xd_out_id, STACKSIZE, temp_humid, NULL, NULL, NULL,
+		PRIORITY, 0, 0);
+#endif
+#ifdef sensorIIIFarFarFarFar		
+K_THREAD_DEFINE(bh1750_out_id, STACKSIZE, ambient_light, NULL, NULL, NULL,
+		PRIORITY, 0, 0);
+#endif
+#ifdef sensorIIFarFarFarFar		
+K_THREAD_DEFINE(icm42605_out_id, STACKSIZE, accel_gyro_main, NULL, NULL, NULL,
+		PRIORITY, 0, 0);
+#endif
 static void bt_ready(int err)
 {
 	if (err) {
