@@ -57,8 +57,8 @@ static void status_handler(struct bt_mesh_onoff_cli *cli,
 	button->status = status->present_on_off;
 	dk_set_led(index, status->present_on_off);
 
-	printk("Button %d: Received response: %s\n", index + 1,
-	       status->present_on_off ? "on" : "off");
+	//sprintf(rayray, "Button %d: Received response: %s\n", index + 1,
+	 //      status->present_on_off ? "on" : "off");
 }
 
 static void button_handler_cb(uint32_t pressed, uint32_t changed)
@@ -81,7 +81,7 @@ static void button_handler_cb(uint32_t pressed, uint32_t changed)
 			.on_off = !buttons[i].status,
 		};
 		int err;
-
+		// 打燈應該是從這裡打
 		/* As we can't know how many nodes are in a group, it doesn't
 		 * make sense to send acknowledged messages to group addresses -
 		 * we won't be able to make use of the responses anyway. This also
@@ -104,7 +104,7 @@ static void button_handler_cb(uint32_t pressed, uint32_t changed)
 		}
 
 		if (err) {
-			printk("OnOff %d set failed: %d\n", i + 1, err);
+			err = 7; //sprintf(rayray, "OnOff %d set failed: %d\n", i + 1, err);
 		}
 	}
 }

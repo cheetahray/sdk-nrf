@@ -12,22 +12,23 @@
 #include <bluetooth/mesh/dk_prov.h>
 #include <dk_buttons_and_leds.h>
 #include "model_handler.h"
-
+#include "uart1.h"
+	
 static void bt_ready(int err)
 {
 	if (err) {
-		printk("Bluetooth init failed (err %d)\n", err);
+		//sprintf(rayray, "Bluetooth init failed (err %d)\n", err);
 		return;
 	}
 
-	printk("Bluetooth initialized\n");
+	//printf("Bluetooth initialized\n");
 
 	dk_leds_init();
 	dk_buttons_init(NULL);
 
 	err = bt_mesh_init(bt_mesh_dk_prov_init(), model_handler_init());
 	if (err) {
-		printk("Initializing mesh failed (err %d)\n", err);
+		//printf(rayray, "Initializing mesh failed (err %d)\n", err);
 		return;
 	}
 
@@ -42,19 +43,21 @@ static void bt_ready(int err)
 	/* This will be a no-op if settings_load() loaded provisioning info */
 	bt_mesh_prov_enable(BT_MESH_PROV_ADV | BT_MESH_PROV_GATT);
 
-	printk("Mesh initialized\n");
+	//sprintf(rayray, "Mesh initialized\n");
 }
 
 int main(void)
 {
 	int err;
-
-	printk("Initializing...\n");
+	//sprintf(rayray ,"Initializing...\n");
 
 	err = bt_enable(bt_ready);
 	if (err) {
-		printk("Bluetooth init failed (err %d)\n", err);
+		err = 9;//sprintf(rayray, "Bluetooth init failed (err %d)\n", err);
 	}
 
+	sensormain();
+	uint8_t* raytry = getSensorValue(Noise);
+	raytry[0] = 6;
 	return 0;
 }
