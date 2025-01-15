@@ -27,7 +27,7 @@
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(bt_lbs, CONFIG_BT_LBS_LOG_LEVEL);
-
+static uint8_t		      bro_bao_val;
 static bool                   notify_enabled;
 static bool                   button_state;
 static struct bt_lbs_cb       lbs_cb;
@@ -92,6 +92,26 @@ static ssize_t read_button(struct bt_conn *conn,
 }
 #endif
 
+static ssize_t read_bro_bao(struct bt_conn *conn,
+			  const struct bt_gatt_attr *attr,
+			  void *buf,
+			  uint16_t len,
+			  uint16_t offset)
+{
+	const char *value = attr->user_data;
+
+	LOG_DBG("Attribute read, handle: %u, conn: %p", attr->handle,
+		(void *)conn);
+
+	if (lbs_cb.bro_bao_cb) {
+		bro_bao_val = lbs_cb.bro_bao_cb();
+		return bt_gatt_attr_read(conn, attr, buf, len, offset, value,
+					 sizeof(*value));
+	}
+
+	return 0;
+}
+
 /* LED Button Service Declaration */
 BT_GATT_SERVICE_DEFINE(lbs_svc,
 BT_GATT_PRIMARY_SERVICE(BT_UUID_LBS),
@@ -111,6 +131,10 @@ BT_GATT_PRIMARY_SERVICE(BT_UUID_LBS),
 			       BT_GATT_CHRC_WRITE,
 			       BT_GATT_PERM_WRITE,
 			       NULL, write_led, NULL),
+	BT_GATT_CHARACTERISTIC(BT_UUID_LBS_BRO_BAO,
+			       BT_GATT_CHRC_READ | BT_GATT_CHRC_NOTIFY,
+			       BT_GATT_PERM_READ, read_bro_bao, NULL, 
+			       &bro_bao_val),       
 );
 
 int bt_lbs_init(struct bt_lbs_cb *callbacks)
@@ -118,6 +142,7 @@ int bt_lbs_init(struct bt_lbs_cb *callbacks)
 	if (callbacks) {
 		lbs_cb.led_cb    = callbacks->led_cb;
 		lbs_cb.button_cb = callbacks->button_cb;
+		lbs_cb.bro_bao_cb= callbacks->bro_bao_cb;
 	}
 
 	return 0;

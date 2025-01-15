@@ -39,7 +39,7 @@
 #define USER_BUTTON             DK_BTN1_MSK
 
 static bool app_button_state;
-
+static uint8_t app_bro_bao_val;
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
 	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
@@ -154,9 +154,15 @@ static bool app_button_cb(void)
 	return app_button_state;
 }
 
+static uint8_t app_bro_bao_cb(void)
+{
+	return app_bro_bao_val;
+}
+
 static struct bt_lbs_cb lbs_callbacs = {
 	.led_cb    = app_led_cb,
 	.button_cb = app_button_cb,
+	.bro_bao_cb= app_bro_bao_cb
 };
 
 static void button_changed(uint32_t button_state, uint32_t has_changed)
@@ -243,6 +249,7 @@ int main(void)
 
 	for (;;) {
 		dk_set_led(RUN_STATUS_LED, (++blink_status) % 2);
+		app_bro_bao_val++;
 		k_sleep(K_MSEC(RUN_LED_BLINK_INTERVAL));
 	}
 }
