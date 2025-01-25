@@ -193,6 +193,9 @@ int bt_mesh_chat_cli_presence_get(struct bt_mesh_chat_cli *chat,
 int bt_mesh_chat_cli_message_send(struct bt_mesh_chat_cli *chat,
 				  const uint8_t *msg);
 
+int bt_mesh_chat_cli_message_send_len(struct bt_mesh_chat_cli *chat,
+				  const uint8_t *msg, uint8_t len);
+
 /** @brief Send a text message to a specified destination.
  *
  * @param[in] cli  Chat Client model instance to send the message.

@@ -294,6 +294,19 @@ int bt_mesh_chat_cli_message_send(struct bt_mesh_chat_cli *chat,
 	return bt_mesh_model_publish(chat->model);
 }
 
+int bt_mesh_chat_cli_message_send_len(struct bt_mesh_chat_cli *chat,
+				  const uint8_t *msg, uint8_t len)
+{
+	struct net_buf_simple *buf = chat->model->pub->msg;
+
+	bt_mesh_model_msg_init(buf, BT_MESH_CHAT_CLI_OP_MESSAGE);
+
+	net_buf_simple_add_mem(buf, msg, len);
+	net_buf_simple_add_u8(buf, '\0');
+
+	return bt_mesh_model_publish(chat->model);
+}
+
 /* .. include_startingpoint_chat_cli_rst_9 */
 int bt_mesh_chat_cli_private_message_send(struct bt_mesh_chat_cli *chat,
 					  uint16_t addr,

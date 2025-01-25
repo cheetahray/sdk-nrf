@@ -15,9 +15,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#define MSG_SIZE 16
+#define MSG_SIZE 64
 #define MOD_SIZE 8
-#define TYPE_SIZE 4
+#define TYPE_SIZE 5
 #define PRINT_SIZE 256
 // CRC-16-CCITT 多項式 0x1021
 #define CRC16_POLY 0xA001
@@ -38,6 +38,22 @@ const char *SenseStr[] = {
     "Noise"
 };
 
+const int modSize[] = {
+    2,
+    8,
+    8,
+    8,
+	8
+};
+
+const int recSize[] = {
+    6,
+    7,
+    7,
+    7,
+	37
+};
+
 char recv_buf[MSG_SIZE];
 //Todo
 //1. 06從AT來
@@ -46,7 +62,8 @@ uint8_t sensorSendArr[TYPE_SIZE][MOD_SIZE] = {
 	{'A',  'T',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 	{0x06, 0x03, 0x00, 0x00, 0x00, 0x01, 0x85, 0xBD},
 	{0x06, 0x03, 0x00, 0x01, 0x00, 0x01, 0xD4, 0x7D},
-	{0x06, 0x03, 0x00, 0x07, 0x00, 0x01, 0x34, 0x7C}
+	{0x06, 0x03, 0x00, 0x07, 0x00, 0x01, 0x34, 0x7C},
+	{0x06, 0x03, 0x00, 0x00, 0x00, 0x10, 0x34, 0x7C}
 };
 	
 const struct device *uart2 = DEVICE_DT_GET(DT_NODELABEL(uart1));
@@ -83,23 +100,17 @@ void recv_str(const struct device *uart, char *str)
 
 void getValue(uint8_t* recv_buf, uint8_t* byteArray, int msg_len)
 {
-	for (int ii = 0; ii < MSG_SIZE; ii++) {
-	   recv_buf[ii] = 0;
-	}
-
 	//snprintf(send_buf, MSG_SIZE, "Hello from device %s, num %d", uart2->name, i);
 	send_str(uart2, byteArray, msg_len);
 	/* Wait some time for the messages to arrive to the second uart. */
 	k_sleep(K_MSEC(100));
 	recv_str(uart2, recv_buf);
-
-	k_sleep(K_MSEC(1000));
 }
 
 uint8_t* getSensorValue(enum SenseType type)
 {
-	int msg_len = (type ==  ID ? 2 : 8);
-    getValue(recv_buf, sensorSendArr[type], msg_len);	
+	memset(recv_buf, 0, MSG_SIZE);
+	getValue(recv_buf, sensorSendArr[type], modSize[type]);	
     return recv_buf;
 }
 
@@ -124,64 +135,98 @@ float calregisters(uint8_t DF1, uint8_t DF2)
 	return (((float)(DF1<<8)+(float)(DF2))/10.0);
 }
 
-void calculateSensorValue(char* str, enum SenseType type)
+bool calculateSensorValue(char* str, enum SenseType type)
 {
 	//2. 溫濕度噪音提出去自成函數
-	uint8_t* ret = getSensorValue(type);
+	getSensorValue(type);
+	bool bolret = (recv_buf[0] != 0);
+	if(bolret)
+	{
+		float adc_read = calregisters((*(recv_buf+3)),(*(recv_buf+4)));
+
+		char *tmpSign = (adc_read < 0) ? "-" : "";
+		float tmpVal = (adc_read < 0) ? -adc_read : adc_read;
+
+		int tmpInt1 = tmpVal;                  // Get the integer (678).
+		float tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
+		int tmpInt2 = trunc(tmpFrac * 10000);  // Turn into integer (123).
+
+		// Print as parts, note that you need 0-padding for fractional bit.
+		sprintf (str, "%s = %s%d.%04d\n", SenseStr[type], tmpSign, tmpInt1, tmpInt2);
+	}		
+	return bolret;
 			
-	float adc_read = calregisters((*(ret+3)),(*(ret+4)));
+}
 
-	char *tmpSign = (adc_read < 0) ? "-" : "";
-	float tmpVal = (adc_read < 0) ? -adc_read : adc_read;
-
-	int tmpInt1 = tmpVal;                  // Get the integer (678).
-	float tmpFrac = tmpVal - tmpInt1;      // Get fraction (0.0123).
-	int tmpInt2 = trunc(tmpFrac * 10000);  // Turn into integer (123).
-
-	// Print as parts, note that you need 0-padding for fractional bit.
-	sprintf (str, "%s = %s%d.%04d\n", SenseStr[type], tmpSign, tmpInt1, tmpInt2);
-			
+bool getSensorRaw(uint8_t* raw, enum SenseType type, uint8_t len)
+{
+	//2. 溫濕度噪音提出去自成函數
+	getSensorValue(type);
+	bool bolret = (recv_buf[0] != 0);
+	if(bolret)
+	{
+		memcpy(raw, recv_buf, len);
+	}
+	return bolret;		
 }
 
 void uart_out(void)
 {
 	int err;
 	char str[PRINT_SIZE];
-	
+	bool getId = false;
+	uint8_t* ret = NULL;
 	sensormain();
 
 	while (1) {
-		k_sleep(K_MSEC(1000));
-
-		uint8_t* ret = getSensorValue(ID);
-
-        memset(str, 0, PRINT_SIZE);
+		memset(str, 0, PRINT_SIZE);
 			
-		if(strlen(ret) > 0)
+		if(false == getId)
 		{
-			// Print as parts, note that you need 0-padding for fractional bit.
-			sprintf (str, "%s\n", ret);
-			//1. 06從AT來，如果沒反應就不執行 sensor
-			int sensorId = atoi(ret+3);
-			for(int ii = 1; ii < TYPE_SIZE; ii++) {
-				sensorSendArr[ii][0] = sensorId;
-				uint16_t crc = crc16_reflect(CRC16_POLY, CRC16_INIT, sensorSendArr[ii], MOD_SIZE - 2);
-				sensorSendArr[ii][7] = (crc >> 8) & 0xFF;
-   		 		sensorSendArr[ii][6] = crc & 0xFF;
-				calculateSensorValue((str+strlen(str)), ii);
+			k_sleep(K_MSEC(1000));
+			ret = getSensorValue(ID);
+			if(strlen(ret) > 0)
+			{
+				// Print as parts, note that you need 0-padding for fractional bit.
+				sprintf (str, "%s\n", ret);
+				//1. 06從AT來，如果沒反應就不執行 sensor
+				int sensorId = atoi(ret+3);
+				for(int ii = 1; ii < TYPE_SIZE; ii++) {
+					sensorSendArr[ii][0] = sensorId;
+					uint16_t crc = crc16_reflect(CRC16_POLY, CRC16_INIT, sensorSendArr[ii], MOD_SIZE - 2);
+					sensorSendArr[ii][7] = (crc >> 8) & 0xFF;
+					sensorSendArr[ii][6] = crc & 0xFF;
+				}
 			}
 			
+		}
+		
+        if(strlen(ret) > 0)
+		{
+			
+#ifdef modbus
+			getId = getSensorRaw(str, 1, recSize[1]);
+			err = sensor_message_len(str, recSize[1]);
+			k_sleep(K_MSEC(1000));
+#else
+			for(int ii = 1; ii < TYPE_SIZE; ii++) {
+				getId = calculateSensorValue((str+strlen(str)), ii);
+			}
+			err = sensor_message(str);
+			k_sleep(K_MSEC(1000));
+#endif
 		}
         else
         {
             // Print as parts, note that you need 0-padding for fractional bit.
 			sprintf (str, "%s\n", "No bro bao 485 sensor.");
-			
+			getId = false;
+			// 怎麼從 main process 去發動傳送 mesh 還要研究一下，目前看起來只能從 shell 來
+			// 應該是從這個地方下 chat
+			err = sensor_message(str);
         }
 
-        // 怎麼從 main process 去發動傳送 mesh 還要研究一下，目前看起來只能從 shell 來
-		// 應該是從這個地方下 chat
-		err = sensor_message(str);
+        
 		if (err) {
 			printk("Failed to send message: %d", err);
 		}

@@ -445,3 +445,19 @@ int sensor_message(char *content)
 
 	return 0;
 }
+
+int sensor_message_len(char *content, uint8_t len)
+{
+	int err;
+
+	if (strlen(content) == 0) {
+		return -EINVAL;
+	}
+	// 應該是從這個地方下 chat
+	err = bt_mesh_chat_cli_message_send_len(&chat, content, len);
+	if (err) {
+		LOG_WRN("Failed to send message: %d", err);
+	}
+
+	return 0;
+}
