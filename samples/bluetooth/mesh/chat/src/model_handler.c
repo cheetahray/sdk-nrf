@@ -429,3 +429,19 @@ const struct bt_mesh_comp *model_handler_init(void)
 
 	return &comp;
 }
+
+int sensor_message(char *content)
+{
+	int err;
+
+	if (strlen(content) == 0) {
+		return -EINVAL;
+	}
+	// 應該是從這個地方下 chat
+	err = bt_mesh_chat_cli_message_send(&chat, content);
+	if (err) {
+		LOG_WRN("Failed to send message: %d", err);
+	}
+
+	return 0;
+}
