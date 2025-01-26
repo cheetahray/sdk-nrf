@@ -15,6 +15,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <zephyr/logging/log.h>
+
 #define MSG_SIZE 64
 #define MOD_SIZE 8
 #define TYPE_SIZE 5
@@ -22,6 +24,17 @@
 // CRC-16-CCITT 多項式 0x1021
 #define CRC16_POLY 0xA001
 #define CRC16_INIT 0xFFFF
+
+#define CONFIG_BT_NUS_UART_BUFFER_SIZE 40
+#define CONFIG_BT_NUS_UART_RX_WAIT_TIME 50000
+
+#define UART_BUF_SIZE CONFIG_BT_NUS_UART_BUFFER_SIZE
+#define UART_WAIT_FOR_BUF_DELAY K_MSEC(50)
+#define UART_WAIT_FOR_RX CONFIG_BT_NUS_UART_RX_WAIT_TIME
+
+#define LOG_MODULE_NAME farfarfarfar
+LOG_MODULE_REGISTER(LOG_MODULE_NAME);
+
 #ifdef brobao
 enum SenseType {
 	ID,
@@ -68,19 +81,58 @@ uint8_t sensorSendArr[TYPE_SIZE][MOD_SIZE] = {
 	
 const struct device *uart2 = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
-struct uart_config uart_cfg = {
-	.baudrate = 9600,
-	.parity = UART_CFG_PARITY_NONE,
-	.stop_bits = UART_CFG_STOP_BITS_1,
-	.flow_ctrl = UART_CFG_FLOW_CTRL_NONE,
-	.data_bits = UART_CFG_DATA_BITS_8,
+// struct uart_config uart_cfg = {
+// 	.baudrate = 9600,
+// 	.parity = UART_CFG_PARITY_NONE,
+// 	.stop_bits = UART_CFG_STOP_BITS_1,
+// 	.flow_ctrl = UART_CFG_FLOW_CTRL_NONE,
+// 	.data_bits = UART_CFG_DATA_BITS_8,
+// };
+
+struct uart_data_t {
+	void *fifo_reserved;
+	uint8_t data[UART_BUF_SIZE];
+	uint16_t len;
 };
 
+static struct k_work_delayable uart_work;
+
+#if CONFIG_BT_NUS_UART_ASYNC_ADAPTER
+UART_ASYNC_ADAPTER_INST_DEFINE(async_adapter);
+#else
+static const struct device *const async_adapter;
+#endif
+
+static K_FIFO_DEFINE(fifo_uart_tx_data);
+static K_FIFO_DEFINE(fifo_uart_rx_data);
+
+struct uart_data_t *tx;
+struct uart_data_t *rx;
+	
 void send_str(const struct device *uart, uint8_t *str, int msg_len)
 {
-	for (int i = 0; i < msg_len; i++) {
-		uart_poll_out(uart, str[i]);
+
+	if (tx) {
+		memcpy(tx->data, str, msg_len);
+		tx->len = msg_len;
+	} else {
+		k_free(rx);
+		return -ENOMEM;
 	}
+
+	int err = uart_tx(uart2, tx->data, tx->len, SYS_FOREVER_MS);
+	if (err) {
+		k_free(rx);
+		k_free(tx);
+		LOG_ERR("Cannot display welcome message (err: %d)", err);
+		
+	}
+
+	return err;
+
+	// for (int i = 0; i < msg_len; i++) {
+	// 	uart_poll_out(uart, str[i]);
+	// }
 	
 	//printk("Device %s sent: \"%s\"\n", uart->name, "Ray");
 }
@@ -103,8 +155,8 @@ void getValue(uint8_t* recv_buf, uint8_t* byteArray, int msg_len)
 	//snprintf(send_buf, MSG_SIZE, "Hello from device %s, num %d", uart2->name, i);
 	send_str(uart2, byteArray, msg_len);
 	/* Wait some time for the messages to arrive to the second uart. */
-	k_sleep(K_MSEC(100));
-	recv_str(uart2, recv_buf);
+	k_sleep(K_MSEC(150));
+	// recv_str(uart2, recv_buf);
 }
 
 uint8_t* getSensorValue(enum SenseType type)
@@ -114,20 +166,208 @@ uint8_t* getSensorValue(enum SenseType type)
     return recv_buf;
 }
 
+static void uart_cb(const struct device *dev, struct uart_event *evt, void *user_data)
+{
+	ARG_UNUSED(dev);
+
+	static size_t aborted_len;
+	struct uart_data_t *buf;
+	static uint8_t *aborted_buf;
+	static bool disable_req;
+
+	switch (evt->type) {
+	case UART_TX_DONE:
+		LOG_DBG("UART_TX_DONE");
+		if ((evt->data.tx.len == 0) ||
+		    (!evt->data.tx.buf)) {
+			return;
+		}
+
+		if (aborted_buf) {
+			buf = CONTAINER_OF(aborted_buf, struct uart_data_t,
+					   data[0]);
+			aborted_buf = NULL;
+			aborted_len = 0;
+		} else {
+			buf = CONTAINER_OF(evt->data.tx.buf, struct uart_data_t,
+					   data[0]);
+		}
+
+		k_free(buf);
+
+		buf = k_fifo_get(&fifo_uart_tx_data, K_NO_WAIT);
+		if (!buf) {
+			return;
+		}
+
+		if (uart_tx(uart2, buf->data, buf->len, SYS_FOREVER_MS)) {
+			LOG_WRN("Failed to send data over UART");
+		}
+
+		break;
+
+	case UART_RX_RDY:
+		LOG_DBG("UART_RX_RDY");
+		buf = CONTAINER_OF(evt->data.rx.buf, struct uart_data_t, data[0]);
+		buf->len += evt->data.rx.len;
+
+		if (disable_req) {
+			return;
+		}
+		else {
+			memcpy(recv_buf, evt->data.rx.buf, recSize[TYPE_SIZE-1]);
+			disable_req = true;
+			uart_rx_disable(uart2);
+		}
+
+		if ((evt->data.rx.buf[buf->len - 1] == '\n') ||
+		    (evt->data.rx.buf[buf->len - 1] == '\r')) {
+			disable_req = true;
+			uart_rx_disable(uart2);
+		}
+
+		break;
+
+	case UART_RX_DISABLED:
+		LOG_DBG("UART_RX_DISABLED");
+		disable_req = false;
+
+		buf = k_malloc(sizeof(*buf));
+		if (buf) {
+			buf->len = 0;
+		} else {
+			LOG_WRN("Not able to allocate UART receive buffer");
+			k_work_reschedule(&uart_work, UART_WAIT_FOR_BUF_DELAY);
+			return;
+		}
+
+		uart_rx_enable(uart2, buf->data, sizeof(buf->data),
+			       UART_WAIT_FOR_RX);
+
+		break;
+
+	case UART_RX_BUF_REQUEST:
+		LOG_DBG("UART_RX_BUF_REQUEST");
+		buf = k_malloc(sizeof(*buf));
+		if (buf) {
+			buf->len = 0;
+			uart_rx_buf_rsp(uart2, buf->data, sizeof(buf->data));
+		} else {
+			LOG_WRN("Not able to allocate UART receive buffer");
+		}
+
+		break;
+
+	case UART_RX_BUF_RELEASED:
+		LOG_DBG("UART_RX_BUF_RELEASED");
+		buf = CONTAINER_OF(evt->data.rx_buf.buf, struct uart_data_t,
+				   data[0]);
+
+		if (buf->len > 0) {
+			k_fifo_put(&fifo_uart_rx_data, buf);
+		} else {
+			k_free(buf);
+		}
+
+		break;
+
+	case UART_TX_ABORTED:
+		LOG_DBG("UART_TX_ABORTED");
+		if (!aborted_buf) {
+			aborted_buf = (uint8_t *)evt->data.tx.buf;
+		}
+
+		aborted_len += evt->data.tx.len;
+		buf = CONTAINER_OF((void *)aborted_buf, struct uart_data_t,
+				   data);
+
+		uart_tx(uart2, &buf->data[aborted_len],
+			buf->len - aborted_len, SYS_FOREVER_MS);
+
+		break;
+
+	default:
+		break;
+	}
+}
+
+static void uart_work_handler(struct k_work *item)
+{
+	struct uart_data_t *buf;
+
+	buf = k_malloc(sizeof(*buf));
+	if (buf) {
+		buf->len = 0;
+	} else {
+		LOG_WRN("Not able to allocate UART receive buffer");
+		k_work_reschedule(&uart_work, UART_WAIT_FOR_BUF_DELAY);
+		return;
+	}
+
+	uart_rx_enable(uart2, buf->data, sizeof(buf->data), UART_WAIT_FOR_RX);
+}
+
+static bool uart_test_async_api(const struct device *dev)
+{
+	const struct uart_driver_api *api =
+			(const struct uart_driver_api *)dev->api;
+
+	return (api->callback_set != NULL);
+}
+
 int sensormain(void)
 {
-	int rc;
+	int err;
+	int pos;
+	
+	// int rc;
 	//char send_buf[MSG_SIZE];
 	
 	//uart_cfg.baudrate = 9600;
 	//printk("\nChanging baudrate of both uart devices to %d!\n\n", uart_cfg.baudrate);
 
-	rc = uart_configure(uart2, &uart_cfg);
-	if (rc) {
-		printk("Could not configure device %s", uart2->name);
+	// rc = uart_configure(uart2, &uart_cfg);
+	// if (rc) {
+	// 	printk("Could not configure device %s", uart2->name);
+	// }
+
+	if (!device_is_ready(uart2)) {
+		return -ENODEV;
 	}
 
-	return 0;
+	rx = k_malloc(sizeof(*rx));
+	if (rx) {
+		rx->len = 0;
+	} else {
+		return -ENOMEM;
+	}
+
+	k_work_init_delayable(&uart_work, uart_work_handler);
+
+	if (IS_ENABLED(CONFIG_BT_NUS_UART_ASYNC_ADAPTER) && !uart_test_async_api(uart2)) {
+		/* Implement API adapter */
+		uart_async_adapter_init(async_adapter, uart2);
+		uart2 = async_adapter;
+	}
+
+	err = uart_callback_set(uart2, uart_cb, NULL);
+	if (err) {
+		k_free(rx);
+		LOG_ERR("Cannot initialize UART callback");
+		return err;
+	}
+
+	tx = k_malloc(sizeof(*tx));
+
+	err = uart_rx_enable(uart2, rx->data, sizeof(rx->data), UART_WAIT_FOR_RX);
+	if (err) {
+		LOG_ERR("Cannot enable uart reception (err: %d)", err);
+		/* Free the rx buffer only because the tx buffer will be handled in the callback */
+		k_free(rx);
+	}
+
+	return err;
+
 }
 
 float calregisters(uint8_t DF1, uint8_t DF2)
@@ -183,7 +423,7 @@ void uart_out(void)
 			
 		if(false == getId)
 		{
-			k_sleep(K_MSEC(1000));
+			k_sleep(K_MSEC(1500));
 			ret = getSensorValue(ID);
 			if(strlen(ret) > 0)
 			{
@@ -205,9 +445,9 @@ void uart_out(void)
 		{
 			
 #ifdef modbus
-			getId = getSensorRaw(str, 1, recSize[1]);
-			err = sensor_message_len(str, recSize[1]);
-			k_sleep(K_MSEC(1000));
+			getId = getSensorRaw(str, TYPE_SIZE-1, recSize[TYPE_SIZE-1]);
+			err = sensor_message_len(str, recSize[TYPE_SIZE-1]);
+			k_sleep(K_MSEC(1500));
 #else
 			for(int ii = 1; ii < TYPE_SIZE; ii++) {
 				getId = calculateSensorValue((str+strlen(str)), ii);
