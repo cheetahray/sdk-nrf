@@ -34,16 +34,27 @@ static const uint8_t *extract_msg(struct net_buf_simple *buf)
 	return net_buf_simple_pull_mem(buf, buf->len);
 }
 
+static void print_hex(const uint8_t *ptr, size_t len, char *dst)
+{
+	while (len-- != 0) {
+		sprintf(dst, "%02x", *ptr++);
+		dst += 2;
+	}
+}
+
 static int handle_message(const struct bt_mesh_model *model, struct bt_mesh_msg_ctx *ctx,
 			  struct net_buf_simple *buf)
 {
 	struct bt_mesh_chat_cli *chat = model->rt->user_data;
 	const uint8_t *msg;
-
+	int size = 128;
+	char dst[size];
+	memset(dst, size, 0);
+	int len = buf->len;
 	msg = extract_msg(buf);
-
+	print_hex(msg, len, dst);
 	if (chat->handlers->message) {
-		chat->handlers->message(chat, ctx, msg);
+		chat->handlers->message(chat, ctx, dst);
 	}
 
 	return 0;
