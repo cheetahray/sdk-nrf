@@ -423,7 +423,8 @@ void uart_out(void)
 			
 		if(false == getId)
 		{
-			k_sleep(K_MSEC(1500));
+			k_sleep(K_MSEC(15000));
+#ifndef staticId			
 			ret = getSensorValue(ID);
 			if(strlen(ret) > 0)
 			{
@@ -431,19 +432,23 @@ void uart_out(void)
 				sprintf (str, "%s\n", ret);
 				//1. 06從AT來，如果沒反應就不執行 sensor
 				int sensorId = atoi(ret+3);
+#else
+				int sensorId = 11;
+#endif			
 				for(int ii = 1; ii < TYPE_SIZE; ii++) {
 					sensorSendArr[ii][0] = sensorId;
 					uint16_t crc = crc16_reflect(CRC16_POLY, CRC16_INIT, sensorSendArr[ii], MOD_SIZE - 2);
 					sensorSendArr[ii][7] = (crc >> 8) & 0xFF;
 					sensorSendArr[ii][6] = crc & 0xFF;
 				}
+#ifndef staticId
 			}
-			
+#endif			
 		}
-		
+#ifndef staticId		
         if(strlen(ret) > 0)
 		{
-			
+#endif			
 #ifdef modbus
 			getId = getSensorRaw(str, TYPE_SIZE-1, recSize[TYPE_SIZE-1]);
 			err = sensor_message_len(str, recSize[TYPE_SIZE-1]);
@@ -455,6 +460,7 @@ void uart_out(void)
 			err = sensor_message(str);
 			k_sleep(K_MSEC(1000));
 #endif
+#ifndef staticId
 		}
         else
         {
@@ -465,7 +471,7 @@ void uart_out(void)
 			// 應該是從這個地方下 chat
 			err = sensor_message(str);
         }
-
+#endif
         
 		if (err) {
 			printk("Failed to send message: %d", err);
