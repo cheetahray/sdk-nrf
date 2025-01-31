@@ -11,6 +11,14 @@
 // For more help, browse the DeviceTree documentation at https://docs.zephyrproject.org/latest/guides/dts/index.html
 // You can also visit the nRF DeviceTree extension documentation at https://docs.nordicsemi.com/bundle/nrf-connect-vscode/page/guides/ncs_configure_app.html#devicetree-support-in-the-extension
 
+/ {
+	load_switch: load_switch {
+		compatible = "nordic,gpio-pins";
+                /* using built-in LED pin for demonstration */
+		gpios = <&gpio1 3 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+};
 
 &i2c0 { /* SDA 0, SCL 1 */
 	status = "disabled";

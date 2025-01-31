@@ -13,6 +13,7 @@
 #include <dk_buttons_and_leds.h>
 #include "model_handler.h"
 #include "uart1.h"
+#include "gpiobao.h"
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(chat, CONFIG_LOG_DEFAULT_LEVEL);
@@ -60,6 +61,11 @@ static void bt_ready(int err)
 int main(void)
 {
 	int err;
+
+	err = gpiomain();
+	if (err) {
+		printk("485 di gpio init failed (err %d)\n", err);
+	}
 
 	printk("Initializing...\n");
 
