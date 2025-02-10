@@ -423,7 +423,10 @@ void uart_out(void)
 			
 		if(false == getId)
 		{
-			k_sleep(K_MSEC(15000));
+			if (IS_ENABLED(CONFIG_BT_MESH_LOW_POWER))
+				k_sleep(K_MSEC(CONFIG_BT_MESH_NODE_ID_TIMEOUT * 1000));
+			else
+				k_sleep(K_MSEC(30000));
 #ifndef staticId			
 			ret = getSensorValue(ID);
 			if(strlen(ret) > 0)
