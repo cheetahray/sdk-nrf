@@ -67,7 +67,6 @@ const int recSize[] = {
 	37
 };
 
-char recv_buf[MSG_SIZE];
 //Todo
 //1. 06從AT來
 //2. 計算 CRC16 
@@ -78,7 +77,16 @@ uint8_t sensorSendArr[TYPE_SIZE][MOD_SIZE] = {
 	{0x06, 0x03, 0x00, 0x07, 0x00, 0x01, 0x34, 0x7C},
 	{0x06, 0x03, 0x00, 0x00, 0x00, 0x10, 0x34, 0x7C}
 };
-	
+#else
+#include <zephyr/bluetooth/gatt.h>
+#include <bluetooth/services/lbs.h>
+#define REC_SIZE MSG_SIZE
+static const struct bt_data sd[] = {
+	BT_DATA_BYTES(BT_DATA_UUID128_ALL, BT_UUID_LBS_VAL),
+};
+#endif	
+char recv_buf[MSG_SIZE];
+
 const struct device *uart2 = DEVICE_DT_GET(DT_NODELABEL(uart1));
 
 // struct uart_config uart_cfg = {
@@ -158,14 +166,14 @@ void getValue(uint8_t* recv_buf, uint8_t* byteArray, int msg_len)
 	k_sleep(K_MSEC(150));
 	// recv_str(uart2, recv_buf);
 }
-
+#ifdef brobao
 uint8_t* getSensorValue(enum SenseType type)
 {
 	memset(recv_buf, 0, MSG_SIZE);
 	getValue(recv_buf, sensorSendArr[type], modSize[type]);	
     return recv_buf;
 }
-
+#endif
 static void uart_cb(const struct device *dev, struct uart_event *evt, void *user_data)
 {
 	ARG_UNUSED(dev);
@@ -215,7 +223,9 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 			return;
 		}
 		else {
+#ifdef brobao			
 			memcpy(recv_buf, evt->data.rx.buf, recSize[TYPE_SIZE-1]);
+#endif
 			disable_req = true;
 			uart_rx_disable(uart2);
 		}
@@ -369,7 +379,7 @@ int sensormain(void)
 	return err;
 
 }
-
+#if braobao
 float calregisters(uint8_t DF1, uint8_t DF2)
 {
 	return (((float)(DF1<<8)+(float)(DF2))/10.0);
@@ -409,7 +419,7 @@ bool getSensorRaw(uint8_t* raw, enum SenseType type, uint8_t len)
 	}
 	return bolret;		
 }
-
+#endif
 void uart_out(void)
 {
 	int err;
@@ -417,13 +427,23 @@ void uart_out(void)
 	bool getId = false;
 	uint8_t* ret = NULL;
 	sensormain();
-
+#ifndef brobao
+	u_int8_t counter = 0;
+	k_sleep(K_MSEC(30000));
+	memcpy(str, sd->data, sd->data_len);
+	uint16_t value = get_local_node_id();
+	uint8_t high, low;
+	split_uint16_to_uint8(value, &high, &low);
+	str[sd->data_len-1] = high;
+	str[sd->data_len-2] = low;
+#endif	
 	while (1) {
+#ifdef brobao			
 		memset(str, 0, PRINT_SIZE);
-			
 		if(false == getId)
 		{
 			k_sleep(K_MSEC(15000));
+			
 #ifndef staticId			
 			ret = getSensorValue(ID);
 			if(strlen(ret) > 0)
@@ -472,11 +492,15 @@ void uart_out(void)
 			err = sensor_message(str);
         }
 #endif
-        
+#else
+        str[sd->data_len] = str[sd->data_len] + 1;
+		err = sensor_message_len(str, sd->data_len+1);
+		k_sleep(K_MSEC(2500));
+#endif        
 		if (err) {
 			printk("Failed to send message: %d", err);
 		}
 
 	}
 }
-#endif
+

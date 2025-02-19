@@ -24,11 +24,10 @@ LOG_MODULE_REGISTER(chat, CONFIG_LOG_DEFAULT_LEVEL);
 /* scheduling priority used by each thread */
 #define PRIORITY 7
 
-#ifdef brobao
+//#ifdef brobao
 K_THREAD_DEFINE(uart_out_id, STACKSIZE, uart_out, NULL, NULL, NULL,
 		PRIORITY, 0, 0);
-
-#endif
+//#endif
 
 static void bt_ready(int err)
 {

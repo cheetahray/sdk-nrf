@@ -607,3 +607,13 @@ int sensor_message_len(char *content, uint8_t len)
 
 	return 0;
 }
+
+uint16_t get_local_node_id()
+{
+	return bt_mesh_model_elem(chat.model)->rt->addr;
+}
+
+void split_uint16_to_uint8(uint16_t input, uint8_t *high, uint8_t *low) {
+    *high = (input >> 8) & 0xFF;
+    *low = input & 0xFF;
+}
