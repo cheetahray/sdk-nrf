@@ -13,8 +13,9 @@
 #define MODEL_HANDLER_H__
 
 #include <zephyr/bluetooth/mesh.h>
-//#define brobao
+#define brobao
 #define modbus
+#define staticId
 #ifdef __cplusplus
 extern "C" {
 #endif

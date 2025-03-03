@@ -14,12 +14,12 @@
 #include "model_handler.h"
 #include <stdio.h>
 #include <string.h>
-
+#include "gpiobao.h"
 #include <zephyr/logging/log.h>
 
 #define MSG_SIZE 64
 #define MOD_SIZE 8
-#define TYPE_SIZE 5
+#define TYPE_SIZE 6
 #define PRINT_SIZE 256
 // CRC-16-CCITT 多項式 0x1021
 #define CRC16_POLY 0xA001
@@ -55,6 +55,7 @@ const int modSize[] = {
     2,
     8,
     8,
+	8,
     8,
 	8
 };
@@ -63,6 +64,7 @@ const int recSize[] = {
     6,
     7,
     7,
+	9,
     7,
 	37
 };
@@ -72,8 +74,9 @@ const int recSize[] = {
 //2. 計算 CRC16 
 uint8_t sensorSendArr[TYPE_SIZE][MOD_SIZE] = {
 	{'A',  'T',  0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-	{0x06, 0x03, 0x00, 0x00, 0x00, 0x01, 0x85, 0xBD},
-	{0x06, 0x03, 0x00, 0x01, 0x00, 0x01, 0xD4, 0x7D},
+	{0x01, 0x03, 0x00, 0x00, 0x00, 0x01, 0x84, 0x0A},
+	{0x01, 0x03, 0x00, 0x01, 0x00, 0x01, 0xD5, 0xCA},
+	{0x01, 0x03, 0x00, 0x00, 0x00, 0x02, 0xC4, 0x0B},
 	{0x06, 0x03, 0x00, 0x07, 0x00, 0x01, 0x34, 0x7C},
 	{0x06, 0x03, 0x00, 0x00, 0x00, 0x10, 0x34, 0x7C}
 };
@@ -160,10 +163,11 @@ void recv_str(const struct device *uart, char *str)
 
 void getValue(uint8_t* recv_buf, uint8_t* byteArray, int msg_len)
 {
-	//snprintf(send_buf, MSG_SIZE, "Hello from device %s, num %d", uart2->name, i);
+	gpioset(0);
 	send_str(uart2, byteArray, msg_len);
 	/* Wait some time for the messages to arrive to the second uart. */
 	k_sleep(K_MSEC(150));
+	gpioset(1);
 	// recv_str(uart2, recv_buf);
 }
 #ifdef brobao
@@ -379,7 +383,7 @@ int sensormain(void)
 	return err;
 
 }
-#if braobao
+#ifdef brobao
 float calregisters(uint8_t DF1, uint8_t DF2)
 {
 	return (((float)(DF1<<8)+(float)(DF2))/10.0);
@@ -453,7 +457,7 @@ void uart_out(void)
 				//1. 06從AT來，如果沒反應就不執行 sensor
 				int sensorId = atoi(ret+3);
 #else
-				int sensorId = 11;
+				int sensorId = 1;
 #endif			
 				for(int ii = 1; ii < TYPE_SIZE; ii++) {
 					sensorSendArr[ii][0] = sensorId;
@@ -470,8 +474,9 @@ void uart_out(void)
 		{
 #endif			
 #ifdef modbus
-			getId = getSensorRaw(str, TYPE_SIZE-1, recSize[TYPE_SIZE-1]);
-			err = sensor_message_len(str, recSize[TYPE_SIZE-1]);
+			int whichone = 3;
+			getId = getSensorRaw(str, whichone, recSize[whichone]);
+			err = sensor_message_len(str, recSize[whichone]);
 			k_sleep(K_MSEC(1500));
 #else
 			for(int ii = 1; ii < TYPE_SIZE; ii++) {
