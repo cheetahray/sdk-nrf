@@ -114,8 +114,8 @@ UART_ASYNC_ADAPTER_INST_DEFINE(async_adapter);
 static const struct device *const async_adapter;
 #endif
 
-static K_FIFO_DEFINE(fifo_uart_tx_data);
-static K_FIFO_DEFINE(fifo_uart_rx_data);
+//static K_FIFO_DEFINE(fifo_uart_tx_data);
+//static K_FIFO_DEFINE(fifo_uart_rx_data);
 
 struct uart_data_t *tx;
 struct uart_data_t *rx;
@@ -163,11 +163,11 @@ void recv_str(const struct device *uart, char *str)
 
 void getValue(uint8_t* recv_buf, uint8_t* byteArray, int msg_len)
 {
-	gpioset(0);
+	gpioset(1);
 	send_str(uart2, byteArray, msg_len);
 	/* Wait some time for the messages to arrive to the second uart. */
 	k_sleep(K_MSEC(150));
-	gpioset(1);
+	//gpioset(0);
 	// recv_str(uart2, recv_buf);
 }
 #ifdef brobao
@@ -207,6 +207,7 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 
 		k_free(buf);
 
+#ifndef gpiobao
 		buf = k_fifo_get(&fifo_uart_tx_data, K_NO_WAIT);
 		if (!buf) {
 			return;
@@ -215,7 +216,8 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 		if (uart_tx(uart2, buf->data, buf->len, SYS_FOREVER_MS)) {
 			LOG_WRN("Failed to send data over UART");
 		}
-
+#endif
+		gpioset(0);
 		break;
 
 	case UART_RX_RDY:
@@ -277,11 +279,11 @@ static void uart_cb(const struct device *dev, struct uart_event *evt, void *user
 		buf = CONTAINER_OF(evt->data.rx_buf.buf, struct uart_data_t,
 				   data[0]);
 
-		if (buf->len > 0) {
-			k_fifo_put(&fifo_uart_rx_data, buf);
-		} else {
+		//if (buf->len > 0) {
+		//	k_fifo_put(&fifo_uart_rx_data, buf);
+		//} else {
 			k_free(buf);
-		}
+		//}
 
 		break;
 
@@ -430,7 +432,7 @@ void uart_out(void)
 	char str[PRINT_SIZE];
 	bool getId = false;
 	uint8_t* ret = NULL;
-	sensormain();
+	
 #ifndef brobao
 	u_int8_t counter = 0;
 	k_sleep(K_MSEC(30000));
@@ -446,8 +448,9 @@ void uart_out(void)
 		memset(str, 0, PRINT_SIZE);
 		if(false == getId)
 		{
+#ifndef gpiobao			
 			k_sleep(K_MSEC(15000));
-			
+#endif			
 #ifndef staticId			
 			ret = getSensorValue(ID);
 			if(strlen(ret) > 0)
@@ -458,13 +461,15 @@ void uart_out(void)
 				int sensorId = atoi(ret+3);
 #else
 				int sensorId = 1;
-#endif			
+#endif
+#ifndef gpiobao			
 				for(int ii = 1; ii < TYPE_SIZE; ii++) {
 					sensorSendArr[ii][0] = sensorId;
 					uint16_t crc = crc16_reflect(CRC16_POLY, CRC16_INIT, sensorSendArr[ii], MOD_SIZE - 2);
 					sensorSendArr[ii][7] = (crc >> 8) & 0xFF;
 					sensorSendArr[ii][6] = crc & 0xFF;
 				}
+#endif				
 #ifndef staticId
 			}
 #endif			

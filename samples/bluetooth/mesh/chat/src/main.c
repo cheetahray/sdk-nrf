@@ -61,12 +61,17 @@ int main(void)
 {
 	int err;
 
+	printk("Initializing...\n");
+
 	err = gpiomain();
 	if (err) {
 		printk("485 di gpio init failed (err %d)\n", err);
 	}
 
-	printk("Initializing...\n");
+	err = sensormain();
+	if (err) {
+		printk("485 sensor init failed (err %d)\n", err);
+	}
 
 	err = bt_enable(bt_ready);
 	if (err) {
