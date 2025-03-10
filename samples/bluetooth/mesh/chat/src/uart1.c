@@ -16,7 +16,7 @@
 #include <string.h>
 #include "gpiobao.h"
 #include <zephyr/logging/log.h>
-
+#include "chat_cli.h"
 #define MSG_SIZE 64
 #define MOD_SIZE 8
 #define TYPE_SIZE 6
@@ -120,6 +120,8 @@ static const struct device *const async_adapter;
 struct uart_data_t *tx;
 struct uart_data_t *rx;
 	
+extern struct bt_mesh_chat_cli chat;
+
 void send_str(const struct device *uart, uint8_t *str, int msg_len)
 {
 
@@ -448,9 +450,17 @@ void uart_out(void)
 		memset(str, 0, PRINT_SIZE);
 		if(false == getId)
 		{
-#ifndef gpiobao			
-			k_sleep(K_MSEC(15000));
-#endif			
+			if(chat.model->pub->addr == BT_MESH_ADDR_UNASSIGNED)
+			{
+				// Print as parts, note that you need 0-padding for fractional bit.
+				k_sleep(K_MSEC(15000));
+				continue;
+			}
+			else
+			{
+				getId = true;
+			}
+
 #ifndef staticId			
 			ret = getSensorValue(ID);
 			if(strlen(ret) > 0)

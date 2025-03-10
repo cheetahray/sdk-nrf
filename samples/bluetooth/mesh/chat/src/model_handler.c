@@ -341,7 +341,7 @@ static const struct bt_mesh_chat_cli_handlers chat_handlers = {
 };
 
 /* .. include_startingpoint_model_handler_rst_1 */
-static struct bt_mesh_chat_cli chat = {
+struct bt_mesh_chat_cli chat = {
 	.handlers = &chat_handlers,
 };
 
