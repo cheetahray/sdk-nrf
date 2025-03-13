@@ -15,6 +15,8 @@
 #include <zephyr/bluetooth/mesh.h>
 //#define brobao
 #define modbus
+#define staticId
+#define gpiobao
 #ifdef __cplusplus
 extern "C" {
 #endif
