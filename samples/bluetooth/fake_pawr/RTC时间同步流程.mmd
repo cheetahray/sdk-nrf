@@ -1,0 +1,36 @@
+sequenceDiagram
+    participant Device as Requesting Device
+    participant Scanner as Scan Callback
+    participant RTC as RTC Time Source
+    participant Sync as Time Sync Handler
+    participant Response as Response Generator
+    
+    Note over Device: ⏰ RTC时间同步流程
+    
+    Device->>Scanner: Send time sync request<br/>(message_type=0x30)
+    Scanner->>RTC: get_synced_rtc_time()
+    
+    Note over RTC: 🕐 Time synchronization
+    RTC->>RTC: Read hardware RTC
+    RTC->>RTC: Apply sync offset corrections
+    RTC->>RTC: Calculate precision confidence
+    
+    RTC-->>Scanner: Current synchronized time<br/>+ confidence level
+    
+    Scanner->>Sync: validate_time_quality()
+    Sync->>Sync: Check if confidence >= 200
+    Sync->>Sync: Verify time stability
+    
+    alt High Quality Time Available
+        Sync-->>Scanner: ✅ Time quality verified
+        Scanner->>Response: prepare_time_response()
+        Response->>Response: Format response data<br/>(rtc_time, confidence, sync_id)
+        Response-->>Scanner: Time sync response ready
+        Scanner-->>Device: ✅ Time sync successful<br/>Current time + confidence
+        
+    else Time Quality Insufficient
+        Sync-->>Scanner: ❌ Time quality poor
+        Scanner-->>Device: ❌ Time sync unavailable<br/>Please retry later
+    end
+    
+    Note over Scanner: 📊 Sync statistics updated

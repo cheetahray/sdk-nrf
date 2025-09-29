@@ -1,0 +1,44 @@
+sequenceDiagram
+    participant Timer as Interference Timer (1000ms)
+    participant Monitor as Channel Monitor
+    participant Analyzer as Interference Analyzer
+    participant Adapter as Adaptive PHY Controller
+    participant Broadcast as Broadcast Manager
+    participant Scanner as Scanner Controller
+    
+    Note over Timer: 📊 干扰监控和自适应调整流程
+    
+    Timer->>Monitor: Check interference levels
+    Monitor->>Monitor: Scan active channels
+    Monitor->>Analyzer: Channel quality data
+    
+    Note over Analyzer: 🔍 Interference analysis
+    Analyzer->>Analyzer: Calculate interference_score
+    Analyzer->>Analyzer: Compare with threshold (75)
+    
+    alt High Interference Detected
+        Analyzer-->>Adapter: 🚨 Interference > threshold
+        
+        Adapter->>Adapter: Evaluate current PHY
+        
+        alt Current PHY is 1M
+            Adapter->>Adapter: Switch to Coded PHY
+            Adapter->>Scanner: Update scan parameters<br/>(PHY_CODED)
+            Adapter->>Broadcast: Update broadcast PHY
+            Scanner-->>Adapter: ✅ PHY updated
+            Broadcast-->>Adapter: ✅ Broadcast updated
+        else Current PHY is Coded
+            Adapter->>Adapter: Switch to 1M PHY
+            Adapter->>Scanner: Update scan parameters<br/>(PHY_1M)
+            Adapter->>Broadcast: Update broadcast PHY
+            Scanner-->>Adapter: ✅ PHY updated
+            Broadcast-->>Adapter: ✅ Broadcast updated
+        end
+        
+        Note over Adapter: 📈 Performance optimization
+        Adapter->>Adapter: Reset interference counters
+        Adapter-->>Timer: ✅ Adaptation complete
+        
+    else Interference Within Limits
+        Analyzer-->>Timer: ✅ No action needed
+    end

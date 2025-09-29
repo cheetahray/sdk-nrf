@@ -1,0 +1,39 @@
+sequenceDiagram
+    participant Main as main()
+    participant Central as pawr_central_init()
+    participant BT as Bluetooth Stack
+    participant Timer as Kernel Timers
+    participant Scheduler as Timeslot Scheduler
+    
+    Note over Main: 🚀 系统初始化流程
+    
+    Main->>+Central: pawr_central_init()
+    Central->>+BT: bt_enable(NULL)
+    BT-->>-Central: Bluetooth initialized
+    
+    Note over Central: 🔄 双模式广播设置
+    Central->>+BT: bt_le_adv_start(legacy_param)
+    BT-->>-Central: Legacy advertising started
+    
+    Central->>+BT: bt_le_ext_adv_create(coded_param)
+    BT-->>-Central: Extended advertising created
+    Central->>BT: bt_le_ext_adv_start(coded_adv)
+    BT-->>Central: Coded PHY advertising started
+    
+    Note over Central: ⏰ 时间和调度器初始化
+    Central->>+Scheduler: init_timeslot_scheduler()
+    Scheduler-->>-Central: High-performance scheduler initialized
+    
+    Central->>+Timer: k_timer_start(cycle_timer, 1000ms)
+    Timer-->>-Central: Cycle timer started
+    Central->>+Timer: k_timer_start(rtc_sync_timer, 1000ms)  
+    Timer-->>-Central: RTC sync timer started
+    Central->>+Timer: k_timer_start(interference_monitor, 5000ms)
+    Timer-->>-Central: Interference monitor started
+    
+    Central-->>-Main: PAwR Central initialized
+    
+    Note over Main: 🔄 主循环开始
+    loop Main Loop
+        Main->>Main: k_sleep(K_SECONDS(1))
+    end

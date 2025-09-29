@@ -1,0 +1,41 @@
+sequenceDiagram
+    participant Device as Peripheral Device
+    participant Central as Central Scan Handler
+    participant Validator as RTC Sync Validator
+    participant Scheduler as Smart Scheduler
+    participant Allocator as Slot Allocator
+    
+    Note over Device: 📱 设备注册和智能时隙分配流程
+    
+    Device->>Central: Registration Request<br/>(message_type=0x20)
+    Note right of Device: device_id, phy_type<br/>rtc_time, sync_confidence
+    
+    Central->>Validator: validate_rtc_sync(request)
+    Validator->>Validator: Check sync_confidence >= 150
+    Validator->>Validator: Calculate time difference
+    
+    alt RTC Sync Valid
+        Validator-->>Central: ✅ Validation passed
+        Central->>Scheduler: find_optimal_timeslot()
+        
+        Note over Scheduler: 🎯 Smart timeslot selection
+        Scheduler->>Scheduler: Determine PHY range<br/>(1M: 10-29, Coded: 30-49)
+        
+        loop For each available slot
+            Scheduler->>Allocator: calculate_timeslot_score()
+            Allocator-->>Scheduler: Slot quality score
+        end
+        
+        Scheduler-->>Central: Best slot identified
+        
+        Central->>Allocator: add_active_slot(slot)
+        Allocator->>Allocator: calculate_neighbor_interference()
+        Allocator-->>Central: Active slot configured
+        
+        Central->>Central: Register device<br/>Update counters
+        Central-->>Device: ✅ Registration successful
+        
+    else RTC Sync Invalid
+        Validator-->>Central: ❌ Validation failed
+        Central-->>Device: ❌ Registration rejected
+    end

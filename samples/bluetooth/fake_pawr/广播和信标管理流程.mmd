@@ -1,0 +1,32 @@
+sequenceDiagram
+    participant Timer as cycle_timer
+    participant Handler as cycle_timer_handler()
+    participant Beacon as beacon_update_timer()
+    participant Utils as Utils Functions
+    participant BT as Bluetooth Stack
+    
+    Note over Timer: 🔄 广播和信标管理流程 (每1000ms循环)
+    
+    Timer->>+Handler: cycle_timer_handler()
+    Handler->>Handler: Update cycle_start_time<br/>Increment cycle_sequence
+    Handler->>Handler: reset_registration_slots()
+    Handler->>+Timer: k_timer_start(beacon_timer, 5ms)
+    Timer-->>-Handler: Beacon timer started
+    Handler-->>-Timer: Cycle handler complete
+    
+    Note over Timer: 📡 信标更新流程 (每5ms)
+    loop Every 5ms
+        Timer->>+Beacon: beacon_update_timer()
+        Beacon->>Beacon: Calculate current_slot<br/>slot_remaining_ms
+        Beacon->>+Utils: get_master_rtc_time()
+        Utils-->>-Beacon: RTC timestamp
+        Beacon->>Beacon: update_slot_status(beacon)
+        
+        alt Current slot >= 10 (Data Slot)
+            Beacon->>Beacon: prepare_request_data(beacon, slot)
+        end
+        
+        Beacon->>+BT: bt_le_adv_update_data(beacon)
+        BT-->>-Beacon: Advertising data updated
+        Beacon-->>-Timer: Beacon updated
+    end
