@@ -1,0 +1,177 @@
+<mxfile host="65bd71144e">
+    <diagram id="data-flow" name="資料流圖">
+        <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                
+                <!-- 標題 -->
+                <mxCell id="title" value="LossTest 完整資料流圖" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=22;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="20" width="900" height="40" as="geometry"/>
+                </mxCell>
+                
+                <!-- 發送端標題 -->
+                <mxCell id="sender-header" value="發送端 Sender" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="80" y="80" width="220" height="50" as="geometry"/>
+                </mxCell>
+                
+                <!-- 接收端標題 -->
+                <mxCell id="receiver-header" value="接收端 Receiver" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="750" y="80" width="220" height="50" as="geometry"/>
+                </mxCell>
+                
+                <!-- 發送端流程 -->
+                <mxCell id="send-1" value="update_adv()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="160" width="180" height="45" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="send-2" value="建立廣告集" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="220" width="180" height="45" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="send-3" value="填充 DEVICE_INFO_ST&lt;br&gt;├ man_id (0xFFFF)&lt;br&gt;├ form_id (0xBAAB)&lt;br&gt;├ eui_64&lt;br&gt;├ pre_cnt&lt;br&gt;└ flw_cnt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="280" width="180" height="90" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="send-4" value="bt_le_ext_adv_set_data()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="385" width="180" height="45" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="send-5" value="封裝 bt_data 結構&lt;br&gt;├ BT_DATA_FLAGS&lt;br&gt;├ BT_DATA_MANUFACTURER_DATA&lt;br&gt;└ BT_DATA_NAME_COMPLETE" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="445" width="180" height="75" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="send-6" value="bt_le_ext_adv_start()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="100" y="535" width="180" height="45" as="geometry"/>
+                </mxCell>
+                
+                <!-- 空中傳輸 -->
+                <mxCell id="air-transmission" value="空中傳輸&#10;(BLE Radio)" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+                    <mxGeometry x="430" y="380" width="180" height="100" as="geometry"/>
+                </mxCell>
+                
+                <!-- 接收端流程 -->
+                <mxCell id="recv-1" value="bt_le_scan_start()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="770" y="160" width="180" height="45" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="recv-2" value="監聽藍牙封包" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+                    <mxGeometry x="770" y="220" width="180" height="45" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="recv-3" value="device_found() 回調" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="770" y="280" width="180" height="45" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="recv-4" value="解析 PHY 類型判斷索引" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="770" y="340" width="180" height="45" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="recv-5" value="bt_data_parse()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="770" y="400" width="180" height="45" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="parser-decision" value="Parser 選擇" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" vertex="1" parent="1">
+                    <mxGeometry x="795" y="460" width="130" height="70" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="parser-1" value="numcast_parser" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="650" y="555" width="140" height="40" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="parser-2" value="test_form_parser" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" vertex="1" parent="1">
+                    <mxGeometry x="860" y="555" width="140" height="40" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="handler-1" value="numcast_packet_evt" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+                    <mxGeometry x="650" y="610" width="140" height="40" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="handler-2" value="tst_form_packet_rcv" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+                    <mxGeometry x="860" y="610" width="140" height="40" as="geometry"/>
+                </mxCell>
+                
+                <mxCell id="recv-final" value="統計處理&lt;br&gt;├ 計數器遞增&lt;br&gt;├ RSSI 統計&lt;br&gt;├ 丟包率計算&lt;br&gt;└ 輸出報告" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=left;" vertex="1" parent="1">
+                    <mxGeometry x="770" y="670" width="180" height="80" as="geometry"/>
+                </mxCell>
+                
+                <!-- 說明框 -->
+                <mxCell id="info-box" value="關鍵驗證點：&lt;br&gt;1. PHY 類型匹配 (1M/2M/Coded S8)&lt;br&gt;2. 製造商 ID (0xFFFF)&lt;br&gt;3. 表單 ID (0xBAAB)&lt;br&gt;4. EUI-64 識別發送者&lt;br&gt;5. pre_cnt 測試階段標識&lt;br&gt;6. flw_cnt 封包序號連續性" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=10;align=left;verticalAlign=top;" vertex="1" parent="1">
+                    <mxGeometry x="80" y="620" width="250" height="110" as="geometry"/>
+                </mxCell>
+                
+                <!-- 連接線 - 發送端 -->
+                <mxCell id="edge-s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#6C8EBF;" edge="1" parent="1" source="sender-header" target="send-1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#6C8EBF;" edge="1" parent="1" source="send-1" target="send-2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-s3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#6C8EBF;" edge="1" parent="1" source="send-2" target="send-3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-s4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#6C8EBF;" edge="1" parent="1" source="send-3" target="send-4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-s5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#6C8EBF;" edge="1" parent="1" source="send-4" target="send-5">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-s6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#6C8EBF;" edge="1" parent="1" source="send-5" target="send-6">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                
+                <!-- 連接線 - 空中傳輸 -->
+                <mxCell id="edge-air1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#D79B00;strokeWidth=3;dashed=1;" edge="1" parent="1" source="send-6" target="air-transmission">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-air2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#D79B00;strokeWidth=3;dashed=1;" edge="1" parent="1" source="air-transmission" target="recv-2">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="610" y="430" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                
+                <!-- 連接線 - 接收端 -->
+                <mxCell id="edge-r1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82B366;" edge="1" parent="1" source="receiver-header" target="recv-1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-r2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82B366;" edge="1" parent="1" source="recv-1" target="recv-2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-r3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82B366;" edge="1" parent="1" source="recv-2" target="recv-3">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-r4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82B366;" edge="1" parent="1" source="recv-3" target="recv-4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-r5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82B366;" edge="1" parent="1" source="recv-4" target="recv-5">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-r6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82B366;" edge="1" parent="1" source="recv-5" target="parser-decision">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                
+                <!-- Parser 分支 -->
+                <mxCell id="edge-p1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673A6;" edge="1" parent="1" source="parser-decision" target="parser-1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-p2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673A6;" edge="1" parent="1" source="parser-decision" target="parser-2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-h1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#B85450;" edge="1" parent="1" source="parser-1" target="handler-1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-h2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#B85450;" edge="1" parent="1" source="parser-2" target="handler-2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                
+                <!-- 匯聚到統計處理 -->
+                <mxCell id="edge-f1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82B366;" edge="1" parent="1" source="handler-1" target="recv-final">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="edge-f2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82B366;" edge="1" parent="1" source="handler-2" target="recv-final">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

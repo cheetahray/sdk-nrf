@@ -1,0 +1,119 @@
+<mxfile host="app.diagrams.net" modified="2026-02-16T00:00:00.000Z" agent="5.0" version="21.0.0" etag="legacy-31bytes" type="device">
+  <diagram name="Legacy Advertising 31 Bytes" id="legacy-adv-31">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- 標題 -->
+        <mxCell id="title" value="Legacy Advertising 封包結構&#xa;(BLE 4.x - 最大 31 bytes)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=18;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="50" y="30" width="750" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- 第一層：Flags + Manufacturer Data -->
+        <mxCell id="flags-block" value="Flags&#xa;3 bytes&#xa;&#xa;0x02 01 06" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="50" y="120" width="120" height="80" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="mandata-block" value="Manufacturer Data&#xa;28 bytes&#xa;&#xa;0x1B FF [26 bytes payload]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="190" y="120" width="610" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Total 標記 -->
+        <mxCell id="total-mark" value="Total: 31 bytes (BLE 4.x 最大限制)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="50" y="220" width="750" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- 第二層：BTv4 結構 -->
+        <mxCell id="btv4-block" value="DEVICE_INFO_BTv4_ST (26 bytes)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="210" y="290" width="570" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- 第三層：DEVICE_INFO_ST + tail -->
+        <mxCell id="device-info-block" value="DEVICE_INFO_ST&#xa;16 bytes" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="210" y="350" width="400" height="60" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="tail-block" value="tail[10]&#xa;10 bytes&#xa;&#xa;設備名稱等" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;fontStyle=1;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="630" y="350" width="150" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- 第四層：DEVICE_INFO_ST 內部欄位 -->
+        <mxCell id="man-id" value="man_id&#xa;2 bytes&#xa;&#xa;0xFFFF" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="210" y="430" width="80" height="70" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="form-id" value="form_id&#xa;2 bytes&#xa;&#xa;0xBAAB" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="300" y="430" width="80" height="70" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="pre-cnt" value="pre_cnt&#xa;2 bytes" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="390" y="430" width="70" height="70" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="flw-cnt" value="flw_cnt&#xa;2 bytes" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="470" y="430" width="70" height="70" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="eui64" value="eui_64&#xa;8 bytes&#xa;&#xa;Big-Endian&#xa;設備唯一ID" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="550" y="430" width="60" height="70" as="geometry"/>
+        </mxCell>
+        
+        <!-- tail 詳細內容 -->
+        <mxCell id="tail-detail" value="例如:&#xa;&quot;LossTst123&quot;&#xa;&#xa;(最多 10 bytes)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="630" y="430" width="150" height="70" as="geometry"/>
+        </mxCell>
+        
+        <!-- 連接線 -->
+        <mxCell id="arrow1" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="mandata-block" target="btv4-block">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="300" as="sourcePoint"/>
+            <mxPoint x="450" y="250" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow2" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="btv4-block" target="device-info-block">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="400" as="sourcePoint"/>
+            <mxPoint x="450" y="350" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="arrow3" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="btv4-block" target="tail-block">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="400" y="400" as="sourcePoint"/>
+            <mxPoint x="450" y="350" as="targetPoint"/>
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 說明框 -->
+        <mxCell id="notes-title" value="重要限制說明" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="50" y="530" width="750" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="notes-content" value="① BLE 4.x Legacy Advertising 最大 31 bytes（包含所有 AD Type headers）&#xa;② 無法像 Extended Advertising 那樣使用多個獨立 AD Types&#xa;③ tail[10] 空間被複用：可放設備名稱，節省額外 AD Type 開銷&#xa;④ 實際封包：3 (Flags) + 2 (Man Data Header) + 26 (Payload) = 31 bytes&#xa;⑤ man_id = 0xFFFF (測試用), form_id = 0xBAAB (Loss Test 識別碼)&#xa;⑥ eui_64 使用 Big-Endian (網路位元組序)，確保跨平台相容" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="50" y="570" width="750" height="120" as="geometry"/>
+        </mxCell>
+        
+        <!-- 位元組標記 -->
+        <mxCell id="byte-mark-flags" value="Byte 0-2" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="80" y="205" width="60" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="byte-mark-mandata" value="Byte 3-30" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="465" y="205" width="70" height="20" as="geometry"/>
+        </mxCell>
+        
+        <!-- 16 + 10 標記 -->
+        <mxCell id="size-mark-16" value="16 bytes" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontColor=#0066CC;" vertex="1" parent="1">
+          <mxGeometry x="375" y="415" width="70" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="size-mark-10" value="10 bytes" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;fontColor=#CC6600;" vertex="1" parent="1">
+          <mxGeometry x="670" y="415" width="70" height="20" as="geometry"/>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
