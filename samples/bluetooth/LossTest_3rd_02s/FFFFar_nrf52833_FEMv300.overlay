@@ -1,0 +1,195 @@
+// To get started, press Ctrl+Space to bring up the completion menu and view the available nodes.
+
+// You can also use the buttons in the sidebar to perform actions on nodes.
+// Actions currently available include:
+
+// * Enabling / disabling the node
+// * Adding the bus to a bus
+// * Removing the node
+// * Connecting ADC channels
+
+// For more help, browse the DeviceTree documentation at https://docs.zephyrproject.org/latest/guides/dts/index.html
+// You can also visit the nRF DeviceTree extension documentation at https://nrfconnect.github.io/vscode-nrf-connect/devicetree/nrfdevicetree.html
+
+/ {
+    rtt_uart {
+        compatible = "segger,rtt-uart";
+    };
+
+    chosen {
+        zephyr,bt-c2h-uart = &{/rtt_uart/};
+        zephyr,bt-mon-uart = &{/rtt_uart/};
+        zephyr,console = &{/rtt_uart/};
+        zephyr,shell-uart = &{/rtt_uart/};
+        zephyr,uart-mcumgr = &{/rtt_uart/};
+    };
+    /* ENABLE  Kconfig::Device Drivers::Console Drivers::Use RTT Console
+       DISABLE Kconfig::Device Drivers::Console Drivers::Use UART for Console */
+
+    /*rtt_uart: rtt_chan0 {
+		compatible = "segger,rtt-uart";
+		status = "okay";
+	};*/
+
+    buttons {
+        status = "disabled";
+    };
+
+    leds {
+        status = "disabled";
+    };
+
+    nrf_radio_fem: nrf21540-fem {
+        compatible = "nordic,nrf21540-fem";
+        zephyr,pm-device-runtime-auto;
+        tx-en-gpios = <&gpio0 28 GPIO_ACTIVE_HIGH>;//<&gpio0 2 GPIO_ACTIVE_HIGH>;
+        rx-en-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+        pdn-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;//<&gpio0 28 GPIO_ACTIVE_HIGH>;
+        /* ant-sel-gpios = <&gpio1 4 0>; */
+        mode-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;//<&gpio0 15 GPIO_ACTIVE_HIGH>;
+        spi-if = <&nrf_radio_fem_spi>;
+		supply-voltage-mv = <3300>;
+    };
+};
+
+fem_spi: &spi3 {
+	status = "okay";
+	cs-gpios = <&gpio0 17 GPIO_ACTIVE_LOW>;
+
+	pinctrl-0 = <&spi3_default>;
+	pinctrl-1 = <&spi3_sleep>;
+	pinctrl-names = "default", "sleep";
+	nrf_radio_fem_spi: nrf21540_fem_spi@0 {
+		compatible = "nordic,nrf21540-fem-spi";
+		status = "okay";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+	};
+};
+
+&radio {
+    fem = <&nrf_radio_fem>;
+};
+
+&arduino_header {
+    gpio-map = <0 0 &gpio0 3 0>,
+               <1 0 &gpio0 4 0>,
+               <2 0 &gpio0 28 0>,
+               <3 0 &gpio0 29 0>,
+               <4 0 &gpio0 30 0>,
+               <5 0 &gpio0 31 0>,
+               <6 0 &gpio1 1 0>,
+               <7 0 &gpio1 2 0>,
+               <8 0 &gpio1 3 0>,
+               <9 0 &gpio1 4 0>,
+               <10 0 &gpio1 5 0>,
+               <11 0 &gpio1 6 0>,
+               <12 0 &gpio1 7 0>,
+               <13 0 &gpio1 8 0>,
+               <14 0 &gpio0 17 0>,
+               <15 0 &gpio0 19 0>,
+               <16 0 &gpio0 20 0>,
+               <17 0 &gpio0 21 0>,
+               <18 0 &gpio0 22 0>,
+               <19 0 &gpio0 23 0>,
+               <20 0 &gpio0 26 0>,
+               <21 0 &gpio0 27 0>;
+    status = "disabled";
+};
+
+&button0 {
+    status = "disabled";
+};
+
+&button1 {
+    status = "disabled";
+};
+
+&button2 {
+    status = "disabled";
+};
+
+&button3 {
+    status = "disabled";
+};
+
+&led0 {
+    status = "disabled";
+};
+
+&led1 {
+    status = "disabled";
+};
+
+&led2 {
+    status = "disabled";
+};
+
+&led3 {
+    status = "disabled";
+};
+
+&nfct {
+    status = "disabled";
+};
+
+&uicr {
+    nfct-pins-as-gpios;
+};
+
+&spi1 {
+    status = "disabled";
+};
+
+&i2c0_default {
+    group1 {
+        psels = <NRF_PSEL(TWIM_SDA, 0, 5)>, <NRF_PSEL(TWIM_SCL, 0, 4)>;
+    };
+};
+
+&i2c0_sleep {
+    group1 {
+        psels = <NRF_PSEL(TWIM_SDA, 0, 5)>, <NRF_PSEL(TWIM_SCL, 0, 4)>;
+    };
+};
+
+&spi0_default {
+    group1 {
+        psels = <NRF_PSEL(SPIM_SCK, 0, 5)>,
+                <NRF_PSEL(SPIM_MOSI, 0, 4)>,
+                <NRF_PSEL(SPIM_MISO, 1, 9)>;
+    };
+};
+
+&spi0_sleep {
+    group1 {
+        psels = <NRF_PSEL(SPIM_SCK, 0, 5)>,
+                <NRF_PSEL(SPIM_MOSI, 0, 4)>,
+                <NRF_PSEL(SPIM_MISO, 1, 9)>;
+    };
+};
+
+&spi3_default {
+    group1 {
+        psels = <NRF_PSEL(SPIM_SCK, 0, 10)>,
+                <NRF_PSEL(SPIM_MISO, 0, 20)>,
+                <NRF_PSEL(SPIM_MOSI, 0, 9)>;
+    };
+};
+
+&spi3_sleep {
+    group1 {
+        psels = <NRF_PSEL(SPIM_SCK, 0, 10)>,
+                <NRF_PSEL(SPIM_MISO, 0, 20)>,
+                <NRF_PSEL(SPIM_MOSI, 0, 9)>;
+    };
+};
+
+&spi0 {
+    cs-gpios = <&gpio0 11 0>;
+    status = "disabled";
+};
+
+&uart0 {
+    status = "disabled";
+};

@@ -1,0 +1,87 @@
+// To get started, press Ctrl+Space to bring up the completion menu and view the available nodes.
+
+// You can also use the buttons in the sidebar to perform actions on nodes.
+// Actions currently available include:
+
+// * Enabling / disabling the node
+// * Adding the bus to a bus
+// * Removing the node
+// * Connecting ADC channels
+
+// For more help, browse the DeviceTree documentation at https://docs.zephyrproject.org/latest/guides/dts/index.html
+// You can also visit the nRF DeviceTree extension documentation at https://docs.nordicsemi.com/bundle/nrf-connect-vscode/page/guides/ncs_configure_app.html#devicetree-support-in-the-extension
+
+&uart1_default {
+	group1 {
+		psels = <NRF_PSEL(UART_TX, 0, 30)>;
+	};
+
+	group2 {
+		psels = <NRF_PSEL(UART_RX, 0, 31)>;
+	};
+};
+
+&uart1 {
+    status = "okay";
+};
+/*
+&spi1_default {
+
+	group2 {
+		psels = <NRF_PSEL(SPIM_SCK, 0, 4)>, <NRF_PSEL(SPIM_MISO, 0, 5)>;
+		bias-pull-up;
+		nordic,invert;
+	};
+};
+/delete-node/ &{/pin-controller/spi1_default/group1/};
+
+&spi1 {
+	max-frequency = <DT_FREQ_M(1)>;
+    slv0:dmyslv0@0 {
+        compatible = "vnd,spi-device","spi-device";
+        reg = <0>;
+        label = "spislv0";
+        frame-format = <0>;
+        duplex = <0>;
+        zephyr,pm-device-runtime-auto;
+        wakeup-source;
+        spi-max-frequency = <DT_FREQ_K(1000)>;
+    };
+	status = "okay";
+};
+*/
+/ {
+    rtt-uart {
+        compatible = "segger,rtt-uart";
+    };
+
+    chosen {
+        //ephyr,bt-c2h-uart = &uart0;
+        //ephyr,bt-mon-uart = &uart0;
+        //ephyr,console = &uart0;
+        //ephyr,shell-uart = &uart0;
+        //ephyr,uart-mcumgr = &uart0;
+		zephyr,bt-c2h-uart = &{/rtt-uart/};
+		zephyr,bt-mon-uart = &{/rtt-uart/};
+		zephyr,console = &{/rtt-uart/};
+		zephyr,shell-uart = &{/rtt-uart/};
+		zephyr,uart-mcumgr = &{/rtt-uart/};
+};
+	DIO:zephyr,user {
+		dio-gpios = <&gpio0 20 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>,
+					<&gpio0 21 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>,
+					<&gpio0 22 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>,
+					<&gpio0 23 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+		status = "okay";
+	};
+};
+
+&uart0_default {
+	group2 {
+		psels = <NRF_PSEL(UART_RX, 0, 5)>;
+	};
+
+	group1 {
+		psels = <NRF_PSEL(UART_TX, 0, 11)>, <NRF_PSEL(UART_RTS, 1, 9)>;
+	};
+};
