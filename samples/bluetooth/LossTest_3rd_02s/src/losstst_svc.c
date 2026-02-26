@@ -427,6 +427,92 @@ static volatile bool ack_remote_resp[4];
 static char peek_msg_str[4][64];
 static uint32_t adv_param_mask[2];
 
+#define ADV_DBG_LOG_ENABLE 1
+#define ADV_DBG_ONLY_IDX0 1
+
+#if ADV_DBG_LOG_ENABLE
+static uint32_t adv_dbg_last_options[5] = { UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX };
+static uint8_t adv_dbg_last_ad_len[5] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+static const char *adv_dbg_last_tag[5] = { NULL, NULL, NULL, NULL, NULL };
+
+static const char *adv_dbg_phy_name(uint8_t index)
+{
+	if (index == 0) return "1M/2M";
+	if (index == 1) return "1M";
+	if (index == 2) return "S8";
+	if (index == 3) return "BLE4";
+	if (index == 4) return "PEEK";
+	return "?";
+}
+
+static uint8_t adv_dbg_compute_ad_len(struct bt_data *adv_data)
+{
+	uint8_t ad_len = 0;
+
+	if (NULL == adv_data) return 0;
+	while (0 != (adv_data + ad_len)->data_len) {
+		ad_len++;
+	}
+
+	return ad_len;
+}
+
+static const char *adv_dbg_pdu_hint(uint32_t options, uint8_t ad_len)
+{
+	if (options & BT_LE_ADV_OPT_ANONYMOUS) return "extended";
+	if (options & BT_LE_ADV_OPT_CODED) return "extended";
+	if (options & BT_LE_ADV_OPT_NO_2M) return "extended";
+	if (!(options & BT_LE_ADV_OPT_EXT_ADV)) return "legacy";
+	if (ad_len > 2) return "extended";
+	return "legacy_or_extended";
+}
+
+static void adv_dbg_log_options_if_changed(const char *tag, uint8_t index, uint32_t options, struct bt_data *adv_data)
+{
+	#if ADV_DBG_ONLY_IDX0
+	if (index != 0) return;
+	#endif
+
+	if (index >= ARRAY_SIZE(adv_dbg_last_options)) return;
+
+	uint8_t ad_len = adv_dbg_compute_ad_len(adv_data);
+	if (adv_dbg_last_options[index] == options
+		&& adv_dbg_last_ad_len[index] == ad_len
+		&& adv_dbg_last_tag[index] == tag) return;
+
+	adv_dbg_last_options[index] = options;
+	adv_dbg_last_ad_len[index] = ad_len;
+	adv_dbg_last_tag[index] = tag;
+	const char *pdu_hint = adv_dbg_pdu_hint(options, ad_len);
+	bool pdu_is_extended = (options & BT_LE_ADV_OPT_ANONYMOUS)
+		|| (options & BT_LE_ADV_OPT_CODED)
+		|| (options & BT_LE_ADV_OPT_NO_2M)
+		|| ((options & BT_LE_ADV_OPT_EXT_ADV) && (ad_len > 2));
+
+	printf("[ADVDBG] %s idx=%u phy=%s opt=0x%08lx ext=%u anon=%u id=%u no2m=%u coded=%u ad_items=%u pdu_hint=%s\n",
+		tag,
+		index,
+		adv_dbg_phy_name(index),
+		(unsigned long)options,
+		(options & BT_LE_ADV_OPT_EXT_ADV) ? 1u : 0u,
+		(options & BT_LE_ADV_OPT_ANONYMOUS) ? 1u : 0u,
+		(options & BT_LE_ADV_OPT_USE_IDENTITY) ? 1u : 0u,
+		(options & BT_LE_ADV_OPT_NO_2M) ? 1u : 0u,
+		(options & BT_LE_ADV_OPT_CODED) ? 1u : 0u,
+		ad_len,
+		pdu_hint);
+
+	if (!pdu_is_extended) {
+		printf("[ADVWARN] %s idx=%u phy=%s opt=0x%08lx pdu_hint=%s (possible legacy path)\n",
+			tag,
+			index,
+			adv_dbg_phy_name(index),
+			(unsigned long)options,
+			pdu_hint);
+	}
+}
+#endif
+
 static bool cfg_phy_sel[4]={true,false,false,false};
 static bool cfg_inhibit_ch37,cfg_inhibit_ch38,cfg_inhibit_ch39;
 static bool cfg_non_ANONYMOUS;
@@ -1113,6 +1199,9 @@ int update_adv(uint8_t index , const struct bt_le_adv_param *adv_parm , struct b
 
 	if(/*3*/4>=index && NULL!=adv_parm) {
 		if(ext_adv_status[index].update_param) bt_le_ext_adv_stop(ext_adv[index]);
+	  #if ADV_DBG_LOG_ENABLE
+		adv_dbg_log_options_if_changed("update_param", index, adv_parm->options, adv_data);
+	  #endif
 		
 		int err=bt_le_ext_adv_update_param(ext_adv[index],adv_parm);
 	  #if(CHK_UPDATE_ADV_PROCDURE)
@@ -1317,6 +1406,16 @@ void sender_setup(struct TEST_PARM * parm_p)
 	non_ANONYMOUS=parm_p->non_ANONYMOUS;
 	adv_param_mask[0]=((non_ANONYMOUS)?BT_LE_ADV_OPT_ANONYMOUS:0);
 	adv_param_mask[1]=(((inhibit_ch37)?BT_LE_ADV_OPT_DISABLE_CHAN_37:0) | ((inhibit_ch38)?BT_LE_ADV_OPT_DISABLE_CHAN_38:0) | ((inhibit_ch39)?BT_LE_ADV_OPT_DISABLE_CHAN_39:0) | ((non_ANONYMOUS)?BT_LE_ADV_OPT_USE_IDENTITY:0));
+	#if ADV_DBG_LOG_ENABLE
+	printf("[ADVDBG] sender_setup phy={2m:%u,1m:%u,s8:%u,ble4:%u} non_anon=%u mask_clr=0x%08lx mask_set=0x%08lx\n",
+		round_phy_sel[0] ? 1u : 0u,
+		round_phy_sel[1] ? 1u : 0u,
+		round_phy_sel[2] ? 1u : 0u,
+		round_phy_sel[3] ? 1u : 0u,
+		non_ANONYMOUS ? 1u : 0u,
+		(unsigned long)adv_param_mask[0],
+		(unsigned long)adv_param_mask[1]);
+	#endif
 	printf("Packet Loss Test (node %03u) **** SND SIDE ****\n",(unsigned char)NRF_FICR->DEVICEADDR[0]);
 	passive_scan_method(0);
 }
@@ -1514,6 +1613,9 @@ int losstst_sender(void)
 					work_adv_param=*non_connectable_adv_param_x[3][idx];
 					work_adv_param.options|=adv_param_mask[1];
 					work_adv_param.options&=~adv_param_mask[0];
+				  #if ADV_DBG_LOG_ENABLE
+					adv_dbg_log_options_if_changed("pre_burst", idx, work_adv_param.options, ratio_test_data_set[idx]);
+				  #endif
 					if(3==idx) device_info_bt4_form.device_info=device_info_form[3];
 					update_adv(idx,&work_adv_param,ratio_test_data_set[idx],p_adv_default_start_param);
 					snd_state_val[idx]=1;
@@ -1576,6 +1678,9 @@ int losstst_sender(void)
 				work_adv_param=*non_connectable_adv_param_x[round_adv_param_index][idx];
 				work_adv_param.options|=adv_param_mask[1];
 				work_adv_param.options&=~adv_param_mask[0];
+			  #if ADV_DBG_LOG_ENABLE
+				adv_dbg_log_options_if_changed("run_burst", idx, work_adv_param.options, ratio_test_data_set[idx]);
+			  #endif
 				if(3==idx) device_info_bt4_form.device_info=device_info_form[3];
 				update_adv(idx,&work_adv_param,ratio_test_data_set[idx],p_adv_burst_start_param);
 				snd_state_val[idx]=2;
