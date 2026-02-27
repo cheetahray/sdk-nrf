@@ -428,7 +428,7 @@ static char peek_msg_str[4][64];
 static uint32_t adv_param_mask[2];
 
 #define ADV_DBG_LOG_ENABLE 1
-#define ADV_DBG_ONLY_IDX0 1
+#define ADV_DBG_IDX_MAX 3  /* 0=trace idx0 only, 1=trace idx0+1, 2=trace idx0+1+2(S8), 3=all */
 
 #if ADV_DBG_LOG_ENABLE
 static uint32_t adv_dbg_last_options[5] = { UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX };
@@ -469,9 +469,7 @@ static const char *adv_dbg_pdu_hint(uint32_t options, uint8_t ad_len)
 
 static void adv_dbg_log_options_if_changed(const char *tag, uint8_t index, uint32_t options, struct bt_data *adv_data)
 {
-	#if ADV_DBG_ONLY_IDX0
-	if (index != 0) return;
-	#endif
+	if (index > ADV_DBG_IDX_MAX) return;
 
 	if (index >= ARRAY_SIZE(adv_dbg_last_options)) return;
 
@@ -489,7 +487,10 @@ static void adv_dbg_log_options_if_changed(const char *tag, uint8_t index, uint3
 		|| (options & BT_LE_ADV_OPT_NO_2M)
 		|| ((options & BT_LE_ADV_OPT_EXT_ADV) && (ad_len > 2));
 
-	printf("[ADVDBG] %s idx=%u phy=%s opt=0x%08lx ext=%u anon=%u id=%u no2m=%u coded=%u ad_items=%u pdu_hint=%s\n",
+	const char *sec_phy = (options & BT_LE_ADV_OPT_CODED) ? "coded"
+		: (options & BT_LE_ADV_OPT_NO_2M) ? "1M" : "2M";
+
+	printf("[ADVDBG] %s idx=%u phy=%s opt=0x%08lx ext=%u anon=%u id=%u no2m=%u coded=%u sec_phy=%s ad_items=%u pdu_hint=%s\n",
 		tag,
 		index,
 		adv_dbg_phy_name(index),
@@ -499,6 +500,7 @@ static void adv_dbg_log_options_if_changed(const char *tag, uint8_t index, uint3
 		(options & BT_LE_ADV_OPT_USE_IDENTITY) ? 1u : 0u,
 		(options & BT_LE_ADV_OPT_NO_2M) ? 1u : 0u,
 		(options & BT_LE_ADV_OPT_CODED) ? 1u : 0u,
+		sec_phy,
 		ad_len,
 		pdu_hint);
 
