@@ -2622,6 +2622,10 @@ static void device_found(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 	else if(1==adv_info->prim_phy && 0==adv_info->sec_phy) idx=3;
 	else return;
 
+	if(1==idx) { static bool _1m1m_logged=false; if(!_1m1m_logged) { _1m1m_logged=true; printk("[1M1M] first pkt prim=%d sec=%d rssi=%d\n", adv_info->prim_phy, adv_info->sec_phy, rssi); } }
+	if(2==idx) { static bool _s8_logged=false; if(!_s8_logged) { _s8_logged=true; printk("[S8] first pkt prim=%d sec=%d rssi=%d\n", adv_info->prim_phy, adv_info->sec_phy, rssi); } }
+	if(3==idx) { static bool _ble4_logged=false; if(!_ble4_logged) { _ble4_logged=true; printk("[BLE4] first pkt prim=%d sec=%d rssi=%d\n", adv_info->prim_phy, adv_info->sec_phy, rssi); } }
+
 	if(0!=scanner_task_tgr(0))  { if(9999999ul<++rcv_stats[idx]) rcv_stats[idx]=9999999ul; }
 	if(0!=envmon_task_tgr(0)) {
 		REC_RSSI_STAMP loc_rec={.expired_tm=k_uptime_get()+60000,.rssi=MIN(20,rssi)};
@@ -2652,11 +2656,10 @@ static void device_found(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 	if(1==idx) {
 		dev_chr.step_raw=0;
 		bt_data_parse(ad,remote_ctrl_parser,&dev_chr);
-		//if(dev_chr.step_success) {
-		//	char addr_str[32];
-		//	bt_addr_le_to_str(addr,addr_str,31);
-		//	printf("src addr :%s\n",addr_str);
-		//}
+		if(dev_chr.step_success) {
+			static uint32_t _rc_cnt=0;
+			printk("[RC_HIT] idx=1 remote_ctrl hit cnt=%u rssi=%d\n", ++_rc_cnt, rssi);
+		}
 	}
 
 
