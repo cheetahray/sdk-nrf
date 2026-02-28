@@ -2218,12 +2218,24 @@ static void tst_form_packet_rcv(struct bt_hci_evt_le_ext_advertising_info * info
 		rec_sets[index]=rcv_stamp[index].rec;
 		subtotal=sub_total_rcv[index]=0;
 	} else if(0<form_p->pre_cnt && INT16_MAX!=form_p->pre_cnt) { // burst counting
-		subtotal=++sub_total_rcv[index];
-		rcv_ratio_val[index][0]=subtotal;
-		rcv_ratio_val[index][1]=LOSS_TEST_BURST_COUNT*rcv_stamp_lc.rec.flow;
-		precnt_rcv[index]=form_p->pre_cnt;
-		sndr_id=rcv_stamp_lc.rec.node;
-		sndr_txpower=rcv_stamp_lc.rec.tx_pwr;
+		// dedup: skip if same pre_cnt as last (sender re-broadcasts same value)
+		if(form_p->pre_cnt == precnt_rcv[index]) {
+			subtotal=sub_total_rcv[index];
+			rcv_ratio_val[index][0]=subtotal;
+			rcv_ratio_val[index][1]=LOSS_TEST_BURST_COUNT*rcv_stamp_lc.rec.flow;
+			sndr_id=rcv_stamp_lc.rec.node;
+			sndr_txpower=rcv_stamp_lc.rec.tx_pwr;
+		} else {
+			if(precnt_rcv[index] > 0 && form_p->pre_cnt > precnt_rcv[index]) {
+				printk("[REORDER] idx=%d pre_cnt=%d > prev=%d\n", index, form_p->pre_cnt, precnt_rcv[index]);
+			}
+			subtotal=++sub_total_rcv[index];
+			rcv_ratio_val[index][0]=subtotal;
+			rcv_ratio_val[index][1]=LOSS_TEST_BURST_COUNT*rcv_stamp_lc.rec.flow;
+			precnt_rcv[index]=form_p->pre_cnt;
+			sndr_id=rcv_stamp_lc.rec.node;
+			sndr_txpower=rcv_stamp_lc.rec.tx_pwr;
+		}
 	} else { // pre-burst,
 		subtotal=sub_total_rcv[index];
 		rcv_ratio_val[index][0]=subtotal;
